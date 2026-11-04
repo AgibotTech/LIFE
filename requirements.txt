@@ -1,0 +1,9 @@
+# evaluator
+av>=12
+pillow>=10
+# RoboBeats pipeline (versions used for the reported numbers)
+torch==2.13.0
+transformers==5.14.1
+peft==0.21.0
+huggingface_hub
+vllm==0.30.0

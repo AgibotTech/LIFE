@@ -1,0 +1,22 @@
+{
+  "judge_model": "Qwen3.8-27B (BF16), served with vLLM as an OpenAI-compatible endpoint",
+  "judge_serving": {
+    "dtype": "bfloat16",
+    "max_model_len": 65536,
+    "limit_mm_per_prompt": {"image": 80, "video": 0},
+    "mm_processor_kwargs": {"max_pixels": 200704, "min_pixels": 3136}
+  },
+  "judge_sampling": {"temperature": 0, "seed": 0, "top_p": 1.0, "max_tokens": 1536, "response_format": {"type": "json_object"}, "chat_template_kwargs": {"enable_thinking": false}},
+  "evidence_frames": {
+    "source": "answers.jsonl evidence_seconds (original-video seconds)",
+    "sampler": "for integer second t, the last decoded RGB frame whose PTS (relative to the first video frame) is <= t; duplicates removed",
+    "resize": "PIL thumbnail to fit within 448x448, PNG",
+    "max_images": 80,
+    "label_before_each_image": "Original-video seconds: {pts:.6f} (sample tick {t})"
+  },
+  "semantic_judge_system": "Judge the candidate against the published visual reference rubric. Use the supplied source evidence to check the minimal core and contradictions. Accept equivalent wording and acceptable variants. Do not require optional details. Do not reward unsupported contradictory details. If reference is inconsistent with images set reference_issue true. Return JSON with boolean correct, core_answer_present, contradiction, reference_issue and a short Chinese reason_zh. Method and sampling policy are hidden.",
+  "semantic_judge_user_payload": "JSON text {question, question_type, reference, candidate} followed by the evidence images; reference = {acceptable_variants, canonical, contradictions, minimal_core, mode, required_facts, rubric_version, tolerance}",
+  "semantic_judge_format_recovery": "OUTPUT FORMAT RECOVERY ONLY: Return JSON with exactly boolean correct, core_answer_present, contradiction, reference_issue and string reason_zh. Apply the unchanged question, candidate, reference and same evidence images. Chinese reason at most four sentences. No additional analysis.",
+  "free_text_numeric_extraction_system": "You extract the numeric answer that a candidate response commits to. You are NOT judging correctness and you are not given the reference. Read the question and the candidate response. If the response commits to one number, return it as value. If it gives a range, return low and high. If it gives no number, refuses, or is unrelated, return kind \"none\". Use the same unit and clock the response uses; do not convert or add offsets. Output JSON only: {\"kind\":\"single|range|none\",\"value\":number|null,\"low\":number|null,\"high\":number|null}",
+  "free_text_numeric_extraction_sampling": {"temperature": 0, "seed": 0, "max_tokens": 80, "response_format": {"type": "json_object"}, "chat_template_kwargs": {"enable_thinking": false}}
+}
