@@ -54,14 +54,17 @@ class Gate:
         mark = probe[1:]
         self.mark = mark[:-len(nl)] if mark[-len(nl):] == nl and len(mark) > len(nl) else mark
 
-    def _chunk(self, ticks, images, judged):
+    def _text(self, ticks, judged):
         parts = [dict(type='text', text=f'Condition: {CONDITION}\n')]
         for t in ticks:
             parts += [dict(type='text', text=f'Video sample {t}; actual relative time {float(t):.6f} seconds.'), dict(type='image')]
             if t in judged:
                 parts.append(dict(type='text', text=MARK + '\n'))
         msgs = [dict(role='system', content=SYSTEM), dict(role='user', content=parts)]
-        text = self.tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=False, enable_thinking=False)
+        return self.tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=False, enable_thinking=False)
+
+    def _chunk(self, ticks, images, judged):
+        text = self._text(ticks, judged)
         enc = self.proc(text=[text], images=images, return_tensors='pt', images_kwargs={'max_pixels': MAX_PIXELS, 'min_pixels': MIN_PIXELS})
         toks, m = enc['input_ids'][0].tolist(), len(self.mark)
         pos = [i + m - 1 for i in range(len(toks) - m + 1) if toks[i:i + m] == self.mark]

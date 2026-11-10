@@ -1,0 +1,7 @@
+[
+ {"file": "perception_test_video_29.mp4", "title": "Open, pour, drink (20 s)",
+  "conditions": [
+   {"text": "Opening something", "truth": [[1.5, 5.5]]},
+   {"text": "Pouring something from something into something", "truth": [[6.0, 11.8]]},
+   {"text": "Drinking something from something", "truth": [[11.9, 18.0]]}]}
+]

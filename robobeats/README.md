@@ -33,6 +33,46 @@ probs = gate.stream((t, im.convert('RGB')) for t, _, im in iter_ticks('my_video.
 kept = select(probs, start=0)  # seconds kept for memory
 ```
 
+## Real-time demo (camera or video)
+
+```bash
+pip install "fastapi>=0.110" "uvicorn[standard]>=0.29"
+python -m robobeats.serve --gate-model superbigsaw/RoboBeats-2B
+# open http://localhost:8000, then "Use camera", drop a video file, or click an example
+```
+
+The page sends one frame per second to the server and plots p as it comes back. Frames go only to the server you run.
+The bundled example is decoded by the server from the original file with the same 1 fps rule as `python -m robobeats`, so its curves match the offline run exactly; the page only plays it.
+On a remote GPU machine, forward the port first (`ssh -L 8000:127.0.0.1:8000 <machine>`); browsers only allow the camera on `localhost` or HTTPS.
+
+**Your own conditions.** On the page you can add conditions of your own, such as "A person is drinking from a cup.", next to the new-event curve. They are judged together in one forward per frame, using the multi-condition prompt the released weights were trained with. Write each condition as a statement that is true or false at a given moment. Accuracy on free-text conditions of your own has not been benchmarked and depends on the wording. The new-event question was always trained on its own, so it runs as a separate session. With both on, each frame costs two forwards; switch the new-event gate off on the page to run conditions only.
+
+For your own loop, use `LiveGate`. It runs one forward per new frame and reuses the model cache within a chunk:
+
+```python
+from robobeats.live import LiveGate
+
+gate = LiveGate('superbigsaw/RoboBeats-2B')
+events = gate.session()                                          # p(new event)
+watch = gate.session(['A person is drinking from a cup.', 'The door is open.'])
+f = gate.frame(t, image)  # t: integer second (increasing), image: PIL image; preprocessed once
+p_event, = events.push(f)
+p_drink, p_door = watch.push(f)
+```
+
+`LiveGate` follows the same prompt and chunking as `Gate.stream` and gives the same probabilities up to BF16 noise. On one H800 with RoboBeats-2B, we ran a 300 s TSU video:
+
+- **New event vs `Gate.stream`:** max |Δp| 0.016; 1 of 301 frames lands on the other side of 0.5.
+- **Three conditions, cached vs recomputed from scratch at every frame:** max |Δp| 0.019; no frame changes side at 0.5.
+- **Speed:** a median of about 130 ms per session per frame. This counts the model call and tokenizing, but not image preprocessing, which runs once per frame.
+
+To check your own setup:
+
+```bash
+python -m robobeats.live --check my_video.mp4 --gate-model superbigsaw/RoboBeats-2B --condition "A person is holding a cup."
+```
+
+
 ## How it works
 
 - **Causal 1 fps sampling.** For every integer second t, the frame is the last decoded frame with timestamp ≤ t.

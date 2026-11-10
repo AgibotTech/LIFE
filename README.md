@@ -3,6 +3,7 @@
 <img src="assets/learning_to_live.gif" width="100%" alt="Learning to Live: A Step Toward Lifelong Embodied Intelligence">
 
 <p>
+  <a href="https://agibotgeneral.github.io/life-site/"><b>🌐 Project Page</b></a> |
   <a href="https://arxiv.org/abs/2611.00180"><b>📄 arXiv</b></a> |
   <a href="#-robobeats"><b>🎵 RoboBeats</b></a> |
   <a href="#models"><b>🤗 Models</b></a> |
@@ -14,6 +15,7 @@
 
 ## 🔥 News
 
+- **[2026-11-10]** ⚡ Real-time RoboBeats: per-frame inference with cache reuse, conditions of your own, and a local web demo for your camera or videos ([Live Demo](#live-demo)).
 - **[2026-11-03]** 🎉 Released RoboBeats: inference code and model weights ([0.8B](https://huggingface.co/superbigsaw/RoboBeats-0.8B), [2B](https://huggingface.co/superbigsaw/RoboBeats-2B), [4B](https://huggingface.co/superbigsaw/RoboBeats-4B)). Released SSS-Bench: the benchmark, evaluator and reproduction scripts.
 - **[2026-10-30]** 📄 The [paper](https://arxiv.org/abs/2611.00180) is on arXiv.
 
@@ -59,7 +61,19 @@ pip install --force-reinstall --no-deps torchvision==0.28.0 torchaudio==2.11.0 -
 python -m robobeats my_video.mp4 --gate-model superbigsaw/RoboBeats-2B --out probs.json
 ```
 
-Models, Python API and the readout: [robobeats/README.md](robobeats/README.md).
+### Live Demo
+
+<img src="assets/robobeats_live.jpg" width="100%" alt="RoboBeats Live: three conditions judged second by second on a Perception Test clip, with the labelled spans under each curve">
+
+Run RoboBeats on your camera, your own video, or the bundled example, in real time, with conditions of your own:
+
+```bash
+pip install "fastapi>=0.110" "uvicorn[standard]>=0.29"
+python -m robobeats.serve --gate-model superbigsaw/RoboBeats-2B
+# open http://localhost:8000
+```
+
+Models, Python API, the real-time `LiveGate` and the readout: [robobeats/README.md](robobeats/README.md).
 
 ## 📊 SSS-Bench
 

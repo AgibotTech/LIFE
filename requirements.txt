@@ -7,3 +7,6 @@ transformers==5.14.1
 peft==0.21.0
 huggingface_hub
 vllm==0.30.0
+# real-time demo (python -m robobeats.serve)
+fastapi>=0.110
+uvicorn[standard]>=0.29

@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RoboBeats Live</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23f05a3c'/%3E%3Cpath d='M5 17h5l3-8 5 15 3-7h6' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f3f4f7; --surface: #ffffff; --surface-2: #f7f8fa; --ink: #12141a; --ink-2: #454b57; --muted: #7a818f;
+  --line: #e3e6ec; --line-2: #eef0f4; --accent: #f05a3c; --accent-ink: #ffffff;
+  --danger: #d92d20; --shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 4px 16px rgba(16, 24, 40, .06);
+  --s0: #f05a3c; --s1: #2f6fed; --s2: #12a37f; --s3: #e8930c; --s4: #8b5cf6; --s5: #e0457b; --s6: #0ea5c4; --s7: #65a30d; --s8: #64748b;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d0f13; --surface: #15181e; --surface-2: #1b1f27; --ink: #eceef2; --ink-2: #b7bcc7; --muted: #868d9a;
+    --line: #262b35; --line-2: #1f232c; --accent: #ff7558; --accent-ink: #1a0c08;
+    --danger: #ff6b5e; --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+    --s0: #ff7558; --s1: #6b9bff; --s2: #34d3a6; --s3: #fbb03b; --s4: #a98bff; --s5: #ff6f9f; --s6: #38cde8; --s7: #9be15d; --s8: #9aa6b8;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body { font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; }
+button, input { font: inherit; color: inherit; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 22px 20px 40px; }
+
+/* header */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.logo { width: 38px; height: 38px; border-radius: 10px; background: var(--accent); display: grid; place-items: center; flex: none; }
+.logo svg { width: 24px; height: 24px; }
+.brand h1 { font-size: 19px; line-height: 1.2; margin: 0; letter-spacing: -.01em; }
+.brand p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: var(--surface);
+  border: 1px solid var(--line); font-size: 13px; color: var(--ink-2); max-width: 100%; }
+.pill span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pill .led { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.pill.ok .led { background: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, .18); }
+.pill.bad .led { background: var(--danger); }
+
+/* layout */
+.layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 920px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); min-width: 0; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px 0; flex-wrap: wrap; }
+.card-head h2 { margin: 0; font-size: 15px; letter-spacing: -.005em; }
+.card-head .sub { color: var(--muted); font-size: 12.5px; }
+.card-body { padding: 14px 16px 16px; }
+
+/* buttons */
+.btn { appearance: none; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 14px;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background .15s, border-color .15s; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.05); }
+.btn.small { padding: 5px 11px; font-size: 13px; border-radius: 8px; }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn svg { width: 14px; height: 14px; flex: none; }
+.seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 11px; padding: 3px; gap: 2px; }
+.seg button, .seg label { border: 0; background: transparent; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 13.5px;
+  color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+.seg button[hidden] { display: none; }
+.seg button:hover, .seg label:hover { color: var(--ink); }
+.seg .on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(16, 24, 40, .1); font-weight: 600; }
+.seg svg { width: 15px; height: 15px; }
+
+/* stage */
+.stage { position: relative; aspect-ratio: 16 / 9; background: #0b0c0f; border-radius: 11px; overflow: hidden; margin: 14px 16px 0; }
+.stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.stage.over { outline: 3px dashed var(--accent); outline-offset: -8px; }
+.empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  padding: 20px; text-align: center; color: #d9dde5; background: radial-gradient(120% 90% at 50% 0%, #1d2230 0%, #0b0c0f 70%); }
+.empty h3 { margin: 0; font-size: 18px; color: #fff; letter-spacing: -.01em; }
+.empty p { margin: 0; font-size: 13px; color: #9aa3b2; max-width: 440px; }
+.empty .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.empty .btn { background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .14); color: #eef1f6; }
+.empty .btn:hover { background: rgba(255, 255, 255, .12); }
+.empty .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.empty .btn[hidden] { display: none; }
+.hud-time { position: absolute; top: 10px; right: 10px; padding: 3px 9px; border-radius: 7px; background: rgba(8, 9, 12, .62);
+  color: #fff; font-size: 12.5px; font-variant-numeric: tabular-nums; backdrop-filter: blur(6px); }
+.hud-time:empty { display: none; }
+.chips { position: absolute; left: 10px; top: 10px; right: 70px; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; }
+.chip { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; padding: 4px 10px 4px 8px; border-radius: 999px;
+  background: rgba(8, 9, 12, .62); color: #e7eaf0; font-size: 12.5px; backdrop-filter: blur(6px); transition: background .2s, color .2s; }
+.chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+.chip b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip.on { background: var(--c); color: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, .25); animation: pop .25s ease-out; }
+@keyframes pop { from { transform: scale(.92); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .chip.on { animation: none; } }
+.chip.on i { background: #fff; }
+.stage-foot { display: flex; justify-content: space-between; gap: 12px; padding: 10px 16px 14px; font-size: 12.5px; color: var(--muted); min-height: 1.5em; flex-wrap: wrap; }
+.stage-foot a { color: inherit; }
+.err { color: var(--danger); }
+
+/* signals */
+.switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); cursor: pointer; user-select: none; position: relative; }
+.switch input { position: absolute; opacity: 0; pointer-events: none; }
+.switch .track { width: 32px; height: 18px; border-radius: 999px; background: var(--line); position: relative; transition: background .15s; flex: none; }
+.switch .track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .25); transition: transform .15s; }
+.switch input:checked + .track { background: var(--s0); }
+.switch input:checked + .track::after { transform: translateX(14px); }
+.switch input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lanes { display: flex; flex-direction: column; gap: 14px; }
+.lane-head { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto auto; align-items: center; gap: 9px; }
+.sw { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
+.lname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
+.lval { font-weight: 650; font-variant-numeric: tabular-nums; font-size: 15px; min-width: 2.6em; text-align: right; }
+.state { font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--line-2); color: var(--muted); min-width: 46px; text-align: center; }
+.state.on { background: var(--c); color: #fff; }
+.lane canvas { width: 100%; height: 58px; display: block; margin-top: 6px; }
+.lane.last canvas { height: 74px; }
+.none { color: var(--muted); font-size: 13.5px; padding: 18px 0; text-align: center; }
+.meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; margin-top: 14px; padding-top: 12px;
+  border-top: 1px solid var(--line-2); color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; }
+.legend .k-fill { width: 14px; height: 10px; border-radius: 2px; background: var(--muted); opacity: .3; }
+.legend .k-bar { width: 14px; height: 4px; border-radius: 2px; background: var(--muted); }
+.legend .k-line { width: 14px; border-top: 1.5px dashed var(--muted); }
+
+/* conditions */
+.cond-list { display: flex; flex-direction: column; gap: 8px; }
+.cond { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.cond input { width: 100%; background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; outline: none; transition: border-color .15s, background .15s; }
+.cond input:focus { border-color: var(--accent); background: var(--surface); }
+.icon-btn { appearance: none; border: 0; background: transparent; color: var(--muted); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; display: grid; place-items: center; }
+.icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+.icon-btn svg { width: 16px; height: 16px; }
+.actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.note { color: var(--muted); font-size: 12.5px; }
+.hint { color: var(--muted); font-size: 12.5px; margin: 0 0 12px; }
+
+/* events */
+.events { list-style: none; margin: 0; padding: 0; max-height: 300px; overflow: auto; }
+.events li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 9px 6px;
+  border-bottom: 1px solid var(--line-2); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.events li:last-child { border-bottom: 0; }
+.events li.none { display: block; border: 0; }
+.events li[data-seek] { cursor: pointer; border-radius: 8px; }
+.events li[data-seek]:hover { background: var(--surface-2); }
+.events .what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); }
+.events .dur { color: var(--muted); font-size: 12.5px; min-width: 3.4em; text-align: right; }
+.events li.open .when { color: var(--accent); font-weight: 600; }
+.foot { margin-top: 22px; color: var(--muted); font-size: 12.5px; text-align: center; }
+@media (max-width: 560px) {
+  .wrap { padding: 16px 16px 32px; }
+  .stage { margin: 12px 12px 0; } .card-head { padding: 12px 12px 0; } .card-body { padding: 12px; } .stage-foot { padding: 10px 12px 12px; }
+  .seg button, .seg label { padding: 6px 9px; }
+  .empty h3 { font-size: 16px; } .empty p:last-child { display: none; }
+  .chips { right: 60px; } .chip span { max-width: 9em; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 13h4l2.5-6.5 4 12 2.5-5.5H22"/></svg></div>
+      <div><h1>RoboBeats Live</h1><p>A causal video gate: every second, p(a new event) and p(each condition you set)</p></div>
+    </div>
+    <div class="pill" id="pill"><span class="led"></span><span id="status">connecting…</span></div>
+  </header>
+
+  <main class="layout">
+    <section class="card">
+      <div class="card-head">
+        <div class="seg" id="seg">
+          <button id="segEx" data-k="example" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6L3.3 9.2l6.1-.6z"/></svg>Example</button>
+          <button id="segCam" data-k="camera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l5-3v10l-5-3z"/><rect x="3" y="6" width="12" height="12" rx="2"/></svg>Camera</button>
+          <label id="segFile" data-k="file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>Video file<input id="file" type="file" accept="video/*" hidden></label>
+        </div>
+        <button class="btn small" id="stop" disabled><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>Stop</button>
+      </div>
+      <div class="stage" id="stage">
+        <video id="video" playsinline muted></video>
+        <div class="empty" id="empty">
+          <h3>Watch the gate judge a video, one second at a time</h3>
+          <p>Play the bundled clip with its labelled actions, point your camera at something, or open a video of your own.</p>
+          <div class="row">
+            <button class="btn primary" id="ctaEx" hidden>▶ Play the example</button>
+            <button class="btn" id="ctaCam">Use camera</button>
+            <button class="btn" id="ctaFile">Open a video</button>
+          </div>
+          <p>or drag a video file here</p>
+        </div>
+        <div class="chips" id="chips"></div>
+        <div class="hud-time" id="hudTime"></div>
+      </div>
+      <div class="stage-foot"><span id="credit"></span><span class="err" id="err"></span></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Signals</h2>
+        <label class="switch" title="p(a new event occurred), the released RoboBeats gate"><input type="checkbox" id="evOn" checked><span class="track"></span>New-event gate</label>
+      </div>
+      <div class="card-body">
+        <div class="lanes" id="lanes"></div>
+        <div class="meta">
+          <div class="legend" id="legend"></div>
+          <div id="stats">idle</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Your conditions</h2><span class="sub">judged together in one forward</span></div>
+      <div class="card-body">
+        <p class="hint">Write each as a statement that is true or false at a moment, e.g. "A person is drinking from a cup."</p>
+        <div class="cond-list" id="condEdit"></div>
+        <div class="actions">
+          <button class="btn small" id="addCond">+ Add condition</button>
+          <button class="btn small primary" id="applyCond">Apply</button>
+          <span class="note" id="condNote"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Events</h2><span class="sub">open at p &gt; 0.5, close below 0.3</span></div>
+      <div class="card-body"><ul class="events" id="events"></ul></div>
+    </section>
+  </main>
+  <p class="foot">Frames go only to the RoboBeats server you started. New events keep the 2 s before they open, as in the SSS-Bench readout.</p>
+</div>
+
+<script>
+const ON = 0.5, OFF = 0.3, LIVE_WINDOW = 60, FILE_WINDOW = 180, SEND_W = 640, EVENT = 'New event';
+const $ = id => document.getElementById(id);
+const video = $('video'), grab = document.createElement('canvas');
+let gen = 0, ws = null, mode = null, busy = false, lastTick = -1, t0 = 0, timer = null, objectUrl = null;
+let lat = [], nFrames = 0, tLast = null, truth = null, exampleFile = null, examples = [];
+// one track per series: the new-event gate (slot 0) and each applied condition (slots 1..8)
+let tracks = [newTrack(EVENT, 0)], applied = [], draft = [''], eventOn = true;
+
+function newTrack(name, slot) { return { name, slot, probs: [], events: [], open: null, prev: null }; }
+function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function color(slot) { return css('--s' + (slot ? (slot - 1) % 8 + 1 : 0)); }   // condition colours repeat after 8
+function fmt(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function setStatus(text, cls) { $('status').textContent = text; $('pill').className = 'pill ' + (cls || ''); }
+function shown() { return tracks.filter(tr => tr.slot > 0 || eventOn); }
+function pre(tr) { return tr.slot ? 0 : 2; }        // the 2 s pre-roll is the memory readout of the new-event gate only
+
+// ---- connection
+function connect() {
+  return new Promise((resolve, reject) => {
+    if (ws && ws.readyState === 1) return resolve();
+    if (ws && ws.readyState === 0) { ws.addEventListener('open', () => resolve(), { once: true }); ws.addEventListener('error', () => reject(new Error('cannot reach the RoboBeats server')), { once: true }); return; }
+    setStatus('connecting…');
+    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+    ws.onopen = () => {
+      if (!eventOn) ws.send(JSON.stringify({ type: 'event', on: false }));
+      if (applied.length) ws.send(JSON.stringify({ type: 'conditions', conditions: applied }));
+      resolve();
+    };
+    ws.onerror = () => { setStatus('server unreachable', 'bad'); reject(new Error('cannot reach the RoboBeats server')); };
+    ws.onclose = () => { busy = false; setStatus('disconnected', 'bad'); };
+    ws.onmessage = ev => {
+      const m = JSON.parse(ev.data);
+      if (m.hello) { setStatus('connected · ' + m.hello.model, 'ok'); editRows(); return; }
+      if (m.error && m.gen === undefined) { setStatus(m.error, 'bad'); return; }
+      if (m.conditions && m.t === undefined) { $('condNote').textContent = m.conditions.length ? `${m.conditions.length} active` : ''; return; }
+      if (m.gen !== undefined && m.gen !== gen) return;                // answer to a stream already restarted
+      if (m.skipped !== undefined) { busy = false; return; }
+      if (m.error) { busy = false; $('err').textContent = m.error; return; }
+      if (m.t === undefined) return;                                   // other acks
+      busy = false; onResult(m);
+    };
+  });
+}
+
+// readout as in the paper's code: on at p > 0.5, off at the first tick with p < 0.3.
+// New events (SSS-Bench `select`): the span keeps 2 s before the rise and runs to the closing tick.
+// Conditions (online Charades / SPOT readout): the span is the ticks that are on, so the closing tick is not in it.
+function feed(tr, t, p) {
+  tr.probs.push([t, p]);
+  if (tr.open === null && p > ON) tr.open = t;
+  else if (tr.open !== null && p < OFF) { tr.events.push([Math.max(0, tr.open - pre(tr)), tr.slot ? tr.prev : t]); tr.open = null; }
+  tr.prev = t;
+}
+
+function onResult(m) {
+  nFrames++; lat.push(m.ms); if (lat.length > 60) lat.shift(); tLast = m.t;
+  if (m.p !== undefined) feed(tracks[0], m.t, m.p);
+  for (const c of (m.conditions || [])) { const tr = tracks.find(x => x.slot > 0 && x.name === c.text); if (tr) feed(tr, m.t, c.p); }
+  render();
+}
+
+// ---- rendering
+function render() { drawLanes(); drawChips(); listEvents(); drawMeta(); }
+
+function drawMeta() {
+  const s = [...lat].sort((a, b) => a - b);
+  $('stats').textContent = nFrames ? `${fmt(tLast)} · ${nFrames} frames · ${s[s.length >> 1].toFixed(0)} ms / frame` : (mode ? 'starting…' : 'idle');
+  $('hudTime').textContent = tLast === null ? '' : fmt(tLast);
+  $('legend').innerHTML = '<span><i class="k-fill"></i>reads true</span><span><i class="k-line"></i>p = 0.5</span>' + (truth ? '<span><i class="k-bar"></i>labelled span</span>' : '');
+}
+
+function drawChips() {                              // on the video: only the signals that read true right now
+  $('chips').innerHTML = mode ? shown().filter(tr => tr.open !== null).map(tr => {
+    const p = tr.probs[tr.probs.length - 1][1];
+    return `<div class="chip on" style="--c:${color(tr.slot)}"><i></i><span>${esc(tr.name)}</span><b>${p.toFixed(2)}</b></div>`;
+  }).join('') : '';
+}
+
+function drawLanes() {
+  const box = $('lanes'), rows = shown();
+  if (!rows.length) { box.innerHTML = '<div class="none">The new-event gate is off and no conditions are set.</div>'; box.dataset.key = ''; return; }
+  const key = rows.map(tr => tr.slot + ':' + tr.name).join('|');
+  if (box.dataset.key !== key) {                       // rebuild the skeleton only when the series change
+    box.dataset.key = key;
+    box.innerHTML = rows.map((tr, i) => `<div class="lane${i === rows.length - 1 ? ' last' : ''}" style="--c:${color(tr.slot)}">` +
+      `<div class="lane-head"><span class="sw"></span><span class="lname" title="${esc(tr.name)}">${esc(tr.name)}</span>` +
+      `<span class="lval">–</span><span class="state">idle</span></div><canvas></canvas></div>`).join('');
+  }
+  const dur = mode === 'file' && isFinite(video.duration) && video.duration <= FILE_WINDOW ? Math.ceil(video.duration) : 0;
+  const win = dur || LIVE_WINDOW;
+  const tEnd = Math.max(dur, tLast === null ? win : Math.max(tLast, win)), tStart = Math.max(0, tEnd - win);
+  const ink2 = css('--ink-2'), muted = css('--muted'), line = css('--line'), line2 = css('--line-2'), surface = css('--surface');
+  [...box.children].forEach((lane, i) => {
+    const tr = rows[i], col = color(tr.slot), last = lane.classList.contains('last');
+    const p = tr.probs.length ? tr.probs[tr.probs.length - 1][1] : null, on = tr.open !== null;
+    lane.querySelector('.lval').textContent = p === null ? '–' : p.toFixed(2);
+    const st = lane.querySelector('.state'); st.className = 'state' + (on ? ' on' : '');
+    st.textContent = p === null ? 'idle' : on ? (tr.slot ? 'true' : 'event') : (tr.slot ? 'false' : 'quiet');
+
+    const c = lane.querySelector('canvas'), dpr = devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
+    if (!w || !h) return;
+    c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+    const g = c.getContext('2d'); g.scale(dpr, dpr);
+    const tb = truth && tr.slot > 0 ? 5 : 0, ax = last ? 16 : 0, top = 3, H = h - top - tb - ax - (tb ? 4 : 1), W = w;
+    const x = t => (t - tStart) / Math.max(1, tEnd - tStart) * (W - 8) + 4, y = q => top + (1 - q) * H;
+    g.fillStyle = line2; g.beginPath(); g.roundRect(0, top, W, H, 6); g.fill();          // panel
+    g.save(); g.beginPath(); g.roundRect(0, top, W, H, 6); g.clip();
+    g.globalAlpha = .16; g.fillStyle = col;                                              // where this series reads true
+    for (const [a, b] of [...tr.events, ...(on ? [[Math.max(0, tr.open - pre(tr)), tLast]] : [])])
+      if (b >= tStart) g.fillRect(x(Math.max(a, tStart)), top, Math.max(2, x(b) - x(Math.max(a, tStart))), H);
+    g.globalAlpha = .5; g.strokeStyle = muted; g.lineWidth = 1; g.setLineDash([3, 4]);  // p = 0.5
+    g.beginPath(); g.moveTo(0, Math.round(y(ON)) + .5); g.lineTo(W, Math.round(y(ON)) + .5); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
+    const pts = tr.probs.filter(([t]) => t >= tStart);                                  // curve with a soft fill underneath
+    if (pts.length) {
+      const segs = [[]];
+      for (const pt of pts) { const cur = segs[segs.length - 1]; if (cur.length && pt[0] - cur[cur.length - 1][0] > 5) segs.push([pt]); else cur.push(pt); }
+      const grad = g.createLinearGradient(0, top, 0, top + H); grad.addColorStop(0, col + '59'); grad.addColorStop(1, col + '05');
+      for (const sg of segs) {
+        g.beginPath(); sg.forEach(([t, q], k) => k ? g.lineTo(x(t), y(q)) : g.moveTo(x(t), y(q)));
+        g.lineTo(x(sg[sg.length - 1][0]), top + H); g.lineTo(x(sg[0][0]), top + H); g.closePath(); g.fillStyle = grad; g.fill();
+        g.beginPath(); sg.forEach(([t, q], k) => k ? g.lineTo(x(t), y(q)) : g.moveTo(x(t), y(q)));
+        g.strokeStyle = col; g.lineWidth = 2; g.lineJoin = 'round'; g.lineCap = 'round'; g.stroke();
+      }
+    }
+    if (tLast !== null && tLast >= tStart) {                                            // playhead
+      g.strokeStyle = ink2; g.globalAlpha = .3; g.beginPath(); g.moveTo(Math.round(x(tLast)) + .5, top); g.lineTo(Math.round(x(tLast)) + .5, top + H); g.stroke(); g.globalAlpha = 1;
+    }
+    g.restore();
+    if (pts.length) {                                                                   // live head
+      const [lt, lq] = pts[pts.length - 1];
+      g.beginPath(); g.arc(x(lt), y(lq), 3.5, 0, 2 * Math.PI); g.fillStyle = col; g.fill(); g.strokeStyle = surface; g.lineWidth = 1.5; g.stroke();
+    }
+    if (tb) {                                                                           // labelled spans (example)
+      const yb = top + H + 4; g.fillStyle = line; g.beginPath(); g.roundRect(0, yb, W, tb, 2.5); g.fill();
+      g.fillStyle = col;
+      for (const [a, b] of truth[tr.name] || []) if (b >= tStart && a <= tEnd) { g.beginPath(); g.roundRect(x(Math.max(a, tStart)), yb, Math.max(3, x(Math.min(b, tEnd)) - x(Math.max(a, tStart))), tb, 2.5); g.fill(); }
+    }
+    if (last) {                                                                         // time axis
+      g.fillStyle = muted; g.font = '11px ui-sans-serif, system-ui, sans-serif'; g.textBaseline = 'bottom';
+      const span = tEnd - tStart, step = [1, 2, 5, 10, 15, 30, 60, 120, 300].find(s => span / s <= 6) || 600;
+      for (let t = Math.ceil(tStart / step) * step; t <= tEnd + 1e-6; t += step) {
+        const lbl = fmt(t), tw = g.measureText(lbl).width, px = Math.min(Math.max(x(t) - tw / 2, 0), W - tw);
+        g.fillText(lbl, px, h);
+      }
+    }
+  });
+}
+
+function listEvents() {
+  const rows = [];
+  for (const tr of shown()) {
+    for (const [a, b] of tr.events) rows.push({ tr, a, b, open: false });
+    if (tr.open !== null) rows.push({ tr, a: Math.max(0, tr.open - pre(tr)), b: null, open: true });
+  }
+  rows.sort((p, q) => (q.open - p.open) || (q.a - p.a));
+  const ul = $('events');
+  if (!rows.length) { ul.innerHTML = '<li class="none">No events yet</li>'; return; }
+  ul.innerHTML = '';
+  for (const r of rows) {
+    const li = document.createElement('li'); if (r.open) li.className = 'open';
+    li.style.setProperty('--c', color(r.tr.slot));
+    li.innerHTML = `<span class="sw"></span><span class="what">${esc(r.tr.name)}</span>` +
+                   `<span class="when">${fmt(r.a)} – ${r.open ? 'now' : fmt(r.b)}</span><span class="dur">${r.open ? 'open' : (r.b - r.a + 1) + ' s'}</span>`;
+    if (mode === 'file') { li.dataset.seek = r.a; li.title = 'Jump to ' + fmt(r.a); li.onclick = () => { video.currentTime = r.a; }; }
+    ul.appendChild(li);
+  }
+}
+
+// ---- condition editor
+const X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+function editRows() {
+  const box = $('condEdit'); box.innerHTML = '';
+  draft.forEach((text, i) => {
+    const row = document.createElement('div'); row.className = 'cond'; row.style.setProperty('--c', color(i + 1));
+    row.innerHTML = `<span class="sw"></span><input maxlength="200" placeholder="e.g. A person is drinking from a cup."><button class="icon-btn" title="Remove">${X}</button>`;
+    const inp = row.querySelector('input'); inp.value = text;
+    inp.oninput = () => { draft[i] = inp.value; $('condNote').textContent = 'not applied yet'; };
+    inp.onkeydown = e => { if (e.key === 'Enter') applyConds(); };
+    row.querySelector('button').onclick = () => { draft.splice(i, 1); if (!draft.length) draft.push(''); editRows(); $('condNote').textContent = 'not applied yet'; };
+    box.appendChild(row);
+  });
+}
+
+function applyConds() {
+  const conds = []; for (const c of draft.map(s => s.trim())) if (c && !conds.includes(c)) conds.push(c);
+  applied = conds; draft = applied.length ? [...applied] : [''];
+  tracks = [tracks[0], ...applied.map((c, i) => newTrack(c, i + 1))];   // a changed list starts its curves fresh
+  if (truth && !applied.every(c => c in truth)) truth = null;             // labelled spans only belong to the example's conditions
+  editRows(); render();
+  $('condNote').textContent = applied.length ? `${applied.length} active` : '';
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'conditions', conditions: applied }));
+}
+$('addCond').onclick = () => { draft.push(''); editRows(); $('condEdit').lastChild.querySelector('input').focus(); };
+$('applyCond').onclick = applyConds;
+
+// ---- frames
+function sendFrame(tick) {                           // camera / your own video: the page grabs the frame
+  if (busy || !ws || ws.readyState !== 1 || tick <= lastTick || !video.videoWidth) return;
+  const s = Math.min(1, SEND_W / video.videoWidth);
+  grab.width = Math.round(video.videoWidth * s); grab.height = Math.round(video.videoHeight * s);
+  grab.getContext('2d').drawImage(video, 0, 0, grab.width, grab.height);
+  busy = true; lastTick = tick; const g0 = gen;
+  grab.toBlob(async blob => {
+    if (g0 !== gen || !blob) { busy = false; return; }
+    const body = new Uint8Array(8 + blob.size), dv = new DataView(body.buffer);
+    dv.setUint32(0, g0, true); dv.setUint32(4, tick, true);
+    body.set(new Uint8Array(await blob.arrayBuffer()), 8); ws.send(body);
+  }, 'image/jpeg', 0.9);
+}
+
+function sendTick(tick) {                            // bundled example: the server decodes the original file itself
+  if (busy || !ws || ws.readyState !== 1 || tick <= lastTick) return;
+  busy = true; lastTick = tick; ws.send(JSON.stringify({ type: 'tick', t: tick, gen }));
+}
+
+function loop() {
+  if (!mode) return;
+  if (mode === 'camera') sendFrame(Math.floor((performance.now() - t0) / 1000));
+  else if (!video.paused && !video.ended) (exampleFile ? sendTick : sendFrame)(Math.floor(video.currentTime));
+  timer = requestAnimationFrame(loop);
+}
+
+function resetState() {
+  tracks = tracks.map(tr => newTrack(tr.name, tr.slot)); lat = []; nFrames = 0; tLast = null; lastTick = -1; busy = false;
+  $('err').textContent = ''; gen++;
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'reset', gen }));
+  render();
+}
+
+function stop() {
+  mode = null; cancelAnimationFrame(timer);
+  if (video.srcObject) { video.srcObject.getTracks().forEach(t => t.stop()); video.srcObject = null; }
+  video.pause(); $('stop').disabled = true; drawMeta(); drawChips();
+}
+
+function markSeg(k) { for (const el of $('seg').children) el.classList.toggle('on', el.dataset.k === k); }
+
+async function start(kind, file, ex) {
+  try {
+    await connect(); stop(); resetState();
+    exampleFile = ex ? ex.file : null;
+    ws.send(JSON.stringify(exampleFile ? { type: 'example', file: exampleFile, gen } : { type: 'live' }));
+    $('empty').style.display = 'none';
+    if (kind === 'camera') {
+      truth = null; $('credit').textContent = 'Camera'; markSeg('camera');
+      video.removeAttribute('src'); video.controls = false;
+      video.srcObject = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      await video.play(); t0 = performance.now();
+    } else {
+      markSeg(ex ? 'example' : 'file');
+      if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
+      if (!ex) { objectUrl = URL.createObjectURL(file); truth = null; $('credit').textContent = file.name; }
+      video.srcObject = null; video.src = ex ? '/examples/' + ex.file : objectUrl; video.controls = true;
+      video.onseeking = () => { if (Math.floor(video.currentTime) < lastTick) resetState(); };   // seeking back restarts the stream
+      await video.play();
+    }
+    mode = kind; $('stop').disabled = false; render(); loop();
+  } catch (e) { $('err').textContent = e.message || String(e); markSeg(null); if (!mode) $('empty').style.display = ''; }
+}
+
+function playExample(ex) {
+  $('evOn').checked = false; eventOn = false;
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'event', on: false }));
+  draft = ex.conditions.map(c => c.text); applyConds();
+  truth = Object.fromEntries(ex.conditions.map(c => [c.text, c.truth]));
+  $('credit').innerHTML = `${esc(ex.title)} · <a href="https://github.com/google-deepmind/perception_test" target="_blank" rel="noopener">Perception Test</a>, CC BY 4.0`;
+  start('file', null, ex);
+}
+
+// ---- wiring
+$('segCam').onclick = $('ctaCam').onclick = () => start('camera');
+$('ctaFile').onclick = () => $('file').click();
+$('file').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) start('file', f); };
+$('segEx').onclick = $('ctaEx').onclick = () => examples[0] && playExample(examples[0]);
+$('stop').onclick = stop;
+$('evOn').onchange = e => {
+  eventOn = e.target.checked; tracks[0] = newTrack(EVENT, 0); render();
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'event', on: eventOn }));
+};
+const stage = $('stage');
+stage.ondragover = e => { e.preventDefault(); stage.classList.add('over'); };
+stage.ondragleave = () => stage.classList.remove('over');
+stage.ondrop = e => { e.preventDefault(); stage.classList.remove('over'); const f = e.dataTransfer.files[0]; if (f && f.type.startsWith('video')) start('file', f); };
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(drawLanes, 60); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { $('lanes').dataset.key = ''; editRows(); render(); });
+
+(async () => {
+  try {
+    examples = await (await fetch('/examples/examples.json')).json();
+    if (examples.length) { $('segEx').hidden = false; $('ctaEx').hidden = false; $('segEx').title = $('ctaEx').title = examples[0].title; }
+  } catch (e) { examples = []; }
+  editRows(); render();
+  connect().catch(() => {});
+})();
+</script>
+</body>
+</html>
