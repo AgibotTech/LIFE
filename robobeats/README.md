@@ -33,6 +33,28 @@ probs = gate.stream((t, im.convert('RGB')) for t, _, im in iter_ticks('my_video.
 kept = select(probs, start=0)  # seconds kept for memory
 ```
 
+### Condition tracking
+
+Pass conditions of your own: statements that are true or false at a moment. Several conditions are judged together in one forward.
+
+```bash
+python -m robobeats my_video.mp4 --condition "A person is drinking from a cup." --condition "The door is open." --out probs.json
+```
+
+It prints, for each condition, the seconds it is on: from p > 0.5 while p ≥ 0.3, the online readout of the paper's condition-tracking evaluations.
+
+```python
+from robobeats.gate import Gate, on_spans
+from robobeats.video import iter_ticks
+
+gate = Gate('superbigsaw/RoboBeats-2B')
+frames = [(t, im.convert('RGB')) for t, _, im in iter_ticks('my_video.mp4', 0, 600)]
+p_drink, p_door = gate.track(frames, ['A person is drinking from a cup.', 'The door is open.'])   # p per frame
+on = on_spans([t for t, _ in frames], p_drink)  # [[first, last] second, ...]
+```
+
+To reproduce the condition-tracking benchmarks (Charades-STA, StreamingBench, SPOT-Bench), see [benchmarks/](../benchmarks/README.md).
+
 ## Real-time demo (camera or video)
 
 ```bash
@@ -62,9 +84,9 @@ p_drink, p_door = watch.push(f)
 
 `LiveGate` follows the same prompt and chunking as `Gate.stream` and gives the same probabilities up to BF16 noise. On one H800 with RoboBeats-2B, we ran a 300 s TSU video:
 
-- **New event vs `Gate.stream`:** max |Δp| 0.016; 1 of 301 frames lands on the other side of 0.5.
-- **Three conditions, cached vs recomputed from scratch at every frame:** max |Δp| 0.019; no frame changes side at 0.5.
-- **Speed:** a median of about 130 ms per session per frame. This counts the model call and tokenizing, but not image preprocessing, which runs once per frame.
+- **New event vs `Gate.stream`:** max |Δp| 0.016; no frame lands on the other side of 0.5.
+- **Three conditions, cached vs recomputed from scratch at every frame:** max |Δp| 0.028; 1 of 903 judgments lands on the other side of 0.5.
+- **Speed:** a median of about 75 ms per session per frame with `flash-linear-attention` installed (about 130 ms without it). This counts the model call and tokenizing, but not image preprocessing, which runs once per frame.
 
 To check your own setup:
 

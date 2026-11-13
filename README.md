@@ -73,7 +73,8 @@ python -m robobeats.serve --gate-model superbigsaw/RoboBeats-2B
 # open http://localhost:8000
 ```
 
-Models, Python API, the real-time `LiveGate` and the readout: [robobeats/README.md](robobeats/README.md).
+Models, Python API, condition tracking, the real-time `LiveGate` and the readout: [robobeats/README.md](robobeats/README.md).
+Condition-tracking benchmarks (Charades-STA, StreamingBench, SPOT-Bench): [benchmarks/README.md](benchmarks/README.md).
 
 ## 📊 SSS-Bench
 

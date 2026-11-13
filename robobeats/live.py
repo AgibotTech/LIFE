@@ -25,19 +25,9 @@ at every frame (conditions), and reports the per-frame latency.
 """
 import time
 
-from .gate import CHUNK, CONDITION, MARK, MAX_PIXELS, MIN_PIXELS, OVERLAP, STRIDE, SYSTEM, Gate
+from .gate import CHUNK, CONDITION, MAX_PIXELS, MIN_PIXELS, OVERLAP, STRIDE, Gate
 
 PAD = '<|image_pad|>'
-SYSTEM_MULTI = ('You watch a live, timestamped video stream and judge several numbered conditions. After each new frame you are '
-                'asked, for every condition in turn, whether it is true at that frame. Judge each condition on its own. Use only the '
-                'frames shown so far; all images are past or current. Answer whether it is true now, not whether it was true earlier. '
-                'Do not invent unseen actions. Answer only true or false.')
-
-
-def mark_text(k, K):
-    return MARK if K == 1 else f'Is condition {k + 1} true now?'
-
-
 class Frame:
     """one preprocessed frame (pixel values, grid, number of image tokens); can be pushed into several sessions.
     tick = frame index in the stream (= the second at 1 fps); pts = its time in seconds (written into the prompt)"""
@@ -88,7 +78,6 @@ class LiveGate(Gate):
         self._find_rope()
         self.pad_id = self.tok.convert_tokens_to_ids(PAD)
         self.merge = self.proc.image_processor.merge_size
-        self._mark_cache = {}
 
     def _find_rope(self):
         self.rope = next(m for m in self.model.modules() if hasattr(m, 'get_rope_index') and type(m).__name__.endswith('Model'))
@@ -104,43 +93,6 @@ class LiveGate(Gate):
         f.pix, f.grid = out['pixel_values'], out['image_grid_thw']
         f.ntok = int(f.grid.prod()) // self.merge ** 2
         return f
-
-    def _marks(self, K):
-        """token ids of marker k as it appears in context: marker 1 right after an image block, markers 2..K after a newline"""
-        if K in self._mark_cache:
-            return self._mark_cache[K]
-        tok = self.tok
-        if K == 1:
-            out = [self.mark]
-        else:
-            nl = tok('\n', add_special_tokens=False)['input_ids']
-            strip = lambda ids: ids[:-len(nl)] if ids[-len(nl):] == nl and len(ids) > len(nl) else ids
-            probe = tok('<|vision_end|>' + mark_text(0, K) + '\n', add_special_tokens=False)['input_ids']
-            assert probe[0] == tok.convert_tokens_to_ids('<|vision_end|>')
-            out = [strip(probe[1:])]
-            head = tok(mark_text(0, K) + '\n', add_special_tokens=False)['input_ids']
-            for k in range(1, K):
-                probe = tok(mark_text(0, K) + '\n' + mark_text(k, K) + '\n', add_special_tokens=False)['input_ids']
-                assert probe[:len(head)] == head
-                out.append(strip(probe[len(head):]))
-        self._mark_cache[K] = out
-        return out
-
-    def _text(self, ticks, judged, conditions=(CONDITION,)):
-        """chat text of one chunk; one condition = the single-condition prompt of `Gate`, several = the numbered prompt.
-        ticks: frame indices (time = index, as in `Gate`) or (index, seconds) pairs"""
-        K = len(conditions)
-        if K == 1:
-            parts = [dict(type='text', text=f'Condition: {conditions[0]}\n')]
-        else:
-            parts = [dict(type='text', text=''.join(f'Condition {k + 1}: {c}\n' for k, c in enumerate(conditions)))]
-        for t in ticks:
-            t, sec = t if isinstance(t, tuple) else (t, t)
-            parts += [dict(type='text', text=f'Video sample {t}; actual relative time {float(sec):.6f} seconds.'), dict(type='image')]
-            if t in judged:
-                parts += [dict(type='text', text=mark_text(k, K) + '\n') for k in range(K)]
-        msgs = [dict(role='system', content=SYSTEM if K == 1 else SYSTEM_MULTI), dict(role='user', content=parts)]
-        return self.tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=False, enable_thinking=False)
 
     def _ids(self, s):
         """token ids of the chunk prompt cut right after the newest frame's last marker, and the K marker positions there"""

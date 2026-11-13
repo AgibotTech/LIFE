@@ -5,6 +5,7 @@ pillow>=10
 torch==2.13.0
 transformers==5.14.1
 peft==0.21.0
+flash-linear-attention==0.5.2   # fast linear attention for Qwen3.5; the reported numbers were computed with it
 huggingface_hub
 vllm==0.30.0
 # real-time demo (python -m robobeats.serve)
